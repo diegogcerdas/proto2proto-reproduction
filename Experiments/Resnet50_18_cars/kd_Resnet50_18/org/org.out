@@ -1,0 +1,14 @@
+
+
+************************* kd_Resnet50_18 *************************
+
+
+Num classes (k) =  196
+Loaded model from  Experiments/Resnet50_18_cars/teacher_Resnet50/org/models/protopnet_1.pth
+True
+Multi-gpu setting
+Using GPU
+Multi-gpu setting
+Using GPU
+save model: Experiments/Resnet50_18_cars/kd_Resnet50_18/org/models/protopnet_1.pth
+1 {'accuracy': 0.007088670563362766}

@@ -1,0 +1,10 @@
+
+
+************************* teacher_Resnet50 *************************
+
+
+Num classes (k) =  196
+Multi-gpu setting
+Using GPU
+save model: Experiments/Resnet50_18_cars/teacher_Resnet50/org/models/protopnet_1.pth
+1 {'accuracy': 0.02151473697301331}

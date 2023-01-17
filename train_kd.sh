@@ -2,15 +2,16 @@
 
 RANDOMN=$$
 RANDOM=org
+nonRandom=org
 runName=kd_Resnet50_18
 newRun=false
 serviceType=kd
 ablationType=Resnet50_18_cars
 
-mkdir Experiments/$ablationType/$runName/$RANDOM
-expOut=Experiments/$ablationType/$runName/$RANDOM/$RANDOM.out
-errorOut=Experiments/$ablationType/$runName/$RANDOM/error+$RANDOMN.out
+mkdir Experiments/$ablationType/$runName/$nonRandom
+expOut=Experiments/$ablationType/$runName/$nonRandom/$nonRandom.out
+errorOut=Experiments/$ablationType/$runName/$nonRandom/error+$nonRandom.out
 
-cp Experiments/$ablationType/$runName/args.yaml Experiments/$ablationType/$runName/$RANDOM/args.yaml
+cp Experiments/$ablationType/$runName/args.yaml Experiments/$ablationType/$runName/$nonRandom/args.yaml
 
-CUDA_VISIBLE_DEVICES=2,3 python -u main.py $runName $newRun $serviceType $RANDOM $ablationType > $expOut 2>$errorOut
+CUDA_VISIBLE_DEVICES=0,1,2,3 python -u main.py $runName $newRun $serviceType $nonRandom $ablationType > $expOut 2>$errorOut

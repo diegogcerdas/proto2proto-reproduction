@@ -26,7 +26,7 @@ def init_proto_model(manager, classes, backbone):
         num_classes=len(classes), feature_net=features, args=manager.settingsConfig)
 
     if backbone.loadPath is not None:
-        checkpoint = torch.load(backbone.loadPath)
+        checkpoint = torch.load(backbone.loadPath, map_location=torch.device('cpu'))
         model = checkpoint['model']
         print("Loaded model from ", backbone.loadPath)
 

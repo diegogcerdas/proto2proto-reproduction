@@ -1,46 +1,30 @@
 dataDir: fill
 newRun: false
-runName: kd_Resnet50_18
-serviceName: protopnet_kd
+runName: Resnet50
+serviceName: protopnet_basic
 dataConfig:
   imgSize: 224
   loaderName: cars
   augment: false
-  trainDir: datasets/cars/train_augmented # Check the dataset path
-  projectDir: datasets/cars/train # Check the dataset path
-  testDir: datasets/cars/test # Check the dataset path
+  trainDir: datasets/cars/train_augmented
+  projectDir: datasets/cars/train
+  testDir: datasets/cars/test
 settingsConfig:
   imgSize: 224
   numFeatures: 256
   PrototypeActivationFunction: log
-  prototypicalModel: protopnet
   useCheckpointOptimizer: true
-  tauTrain: 100
   backbone:
     name: resnet50
     pretrained: true
-    featureDim: 2048
-    prototypicalModel: protopnet
-    loadPath: Experiments/Resnet50_18_cars/teacher_Resnet50/org/models/protopnet_1.pth
-  target:
-    name: resnet18
-    pretrained: true
     loadPath: null
-    featureDim: 512
     prototypicalModel: protopnet
   protoPNet:
     numPrototypes: 1960
-    classSpecific: True
+    classSpecific: true
     W1: 1
     H1: 1
-  stage1LossList:
-    addOnLoss:
-      consider: true
-      weight: 10.0
-    protoLoss:
-      consider: true
-      weight: 10.0
-  stage2LossList:
+  lossList:
     crossEntropy:
       consider: true
       weight: 1.0
@@ -51,14 +35,8 @@ settingsConfig:
     l1:
       consider: true
       weight: 1.0e-04
-    addOnLoss:
-      consider: true
-      weight: 10.0
-    protoLoss:
-      consider: true
-      weight: 10.0
   train:
-    seed: 9
+    seed: 12
     maxEpochs: 300
     lrNet: 2.0e-04
     lrBlock: 3.0e-03
@@ -69,11 +47,10 @@ settingsConfig:
     stepSize: 4
     stepStart: 16
     warmEpochs: 6
-    stage1Epochs: 0
     pushStart: 12
     evalEpoch: 1
     saveEpoch: 1
-    optimizer: AdamW
+    optimizer: Adam
     useTensorboard: true
 common:
   cuda: true
@@ -81,5 +58,5 @@ common:
   numWorkers: 0
   testBatchSize: 100
   testNumWorkers: 0
-  trainBatchSize: 64
-  trainNumWorkers: 2
+  trainBatchSize: 128
+  trainNumWorkers: 4

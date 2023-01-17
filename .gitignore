@@ -4,6 +4,5 @@
 __pycache__/
 *.py[cod]
 *.cpython-36.pyc
-org/
 datasets
 */*.pth
