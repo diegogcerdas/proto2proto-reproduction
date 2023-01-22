@@ -7,7 +7,7 @@ def makedir(path):
     if not os.path.exists(path):
         os.makedirs(path)
 
-datasets_root_dir = './datasets/CUB_200_2011/dataset/'
+datasets_root_dir = './datasets/CUB_200_2011'
 dir = datasets_root_dir + 'train_crop/'
 target_dir_name = 'train_crop_augmented/'
 
@@ -21,30 +21,30 @@ tfd = target_dir_name
 p = Augmentor.Pipeline(source_directory=fd, output_directory=tfd)
 p.rotate(probability=1, max_left_rotation=15, max_right_rotation=15)
 p.flip_left_right(probability=0.5)
-for i in range(10):
-    p.process()
+# for i in range(10):
+#     p.process()
 del p
 
 # Skew
 p = Augmentor.Pipeline(source_directory=fd, output_directory=tfd)
 p.skew(probability=1, magnitude=0.2)  # max 45 degrees
 p.flip_left_right(probability=0.5)
-for i in range(10):
-    p.process()
+# for i in range(10):
+#     p.process()
 del p
 
 # Shear
 p = Augmentor.Pipeline(source_directory=fd, output_directory=tfd)
 p.shear(probability=1, max_shear_left=10, max_shear_right=10)
 p.flip_left_right(probability=0.5)
-for i in range(10):
-    p.process()
+# for i in range(10):
+#     p.process()
 del p
 
 # distortion
 p = Augmentor.Pipeline(source_directory=fd, output_directory=tfd)
 p.random_distortion(probability=1, grid_width=5, grid_height=5, magnitude=5)
 p.flip_left_right(probability=0.5)
-for i in range(10):
-    p.process()
+# for i in range(10):
+#     p.process()
 del p

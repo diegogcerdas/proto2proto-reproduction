@@ -3,7 +3,7 @@ from . import cub
 
 __dataset_factory = {
     'cars': cars.DatasetLoader,
-    'cub': cars.DatasetLoader,
+    'cub': cub.DatasetLoader,
 }
 
 
