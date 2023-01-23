@@ -37,7 +37,7 @@ settingsConfig:
       weight: 1.0e-04
   train:
     seed: 12
-    maxEpochs: 300
+    maxEpochs: 100  # 300
     lrNet: 2.0e-04
     lrBlock: 3.0e-03
     lrProto: 3.0e-03
@@ -49,7 +49,7 @@ settingsConfig:
     warmEpochs: 6
     pushStart: 12
     evalEpoch: 1
-    saveEpoch: 1
+    saveEpoch: 5  # 1
     optimizer: Adam
     useTensorboard: true
 common:
