@@ -14,13 +14,13 @@ settingsConfig:
   numFeatures: 128
   PrototypeActivationFunction: log
   prototypicalModel: protopnet
-  useCheckpointOptimizer: true
+  useCheckpointOptimizer: false
   tauTrain: 100
   backbone:
     name: vgg19
     pretrained: true
     prototypicalModel: protopnet
-    loadPath: checkpoints/vgg19.pth
+    loadPath: checkpoints/vgg19_sd.pth
   target:
     name: vgg11
     pretrained: true
