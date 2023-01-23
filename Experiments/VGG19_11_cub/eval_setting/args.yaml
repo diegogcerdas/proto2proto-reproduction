@@ -1,7 +1,7 @@
 dataDir: fill
 newRun: false
 runName: VGG19_11_cub
-serviceName: protopnet_evaluate_final
+serviceName: protopnet_evaluate
 dataConfig:
   imgSize: 224
   loaderName: cub
