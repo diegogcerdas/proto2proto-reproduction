@@ -336,9 +336,9 @@ class PPNet2(nn.Module):
         '''
         the feature input to prototype layer
         '''
-        x = self.features(x)
-        x = self.add_on_layers(x)
-        return x
+        f = self.features(x)
+        x = self.add_on_layers(f)
+        return x, f
 
     @staticmethod
     def _weighted_l2_convolution(input, filter, weights):
@@ -390,9 +390,9 @@ class PPNet2(nn.Module):
         '''
         x is the raw input
         '''
-        conv_features = self.conv_features(x)
-        distances = self._l2_convolution(conv_features)
-        return distances
+        add_on_features, features = self.conv_features(x)
+        distances = self._l2_convolution(add_on_features)
+        return distances, add_on_features, features
 
     def distance_2_similarity(self, distances):
         if self.prototype_activation_function == 'log':
@@ -403,7 +403,7 @@ class PPNet2(nn.Module):
             return self.prototype_activation_function(distances)
 
     def forward(self, x):
-        distances = self.prototype_distances(x)
+        distances, add_on_features, features = self.prototype_distances(x)
         '''
         we cannot refactor the lines below for similarity scores
         because we need to return min_distances
@@ -415,7 +415,7 @@ class PPNet2(nn.Module):
         min_distances = min_distances.view(-1, self.num_prototypes)
         prototype_activations = self.distance_2_similarity(min_distances)
         logits = self.last_layer(prototype_activations)
-        return logits, min_distances
+        return logits, [min_distances, add_on_features, features, distances]
 
     def push_forward(self, x):
         '''this method is needed for the pushing operation'''
