@@ -17,4 +17,4 @@ cd $HOME/diego/FACT-2023-G23
 # Activate your environment
 source activate myenv
 # Run your code
-srun sh train_kd.sh
+srun sh train_kd_cub_vgg19_vgg11.sh

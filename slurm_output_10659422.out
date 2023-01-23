@@ -1,3 +1,0 @@
-mkdir: cannot create directory 'Experiments/Resnet50_18_cars/kd_Resnet50_18/org': File exists
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-slurmstepd: error: *** JOB 10659422 ON r28n4 CANCELLED AT 2023-01-18T09:40:10 ***

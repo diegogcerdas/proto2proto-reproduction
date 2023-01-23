@@ -6,7 +6,7 @@ dataConfig:
   imgSize: 224
   loaderName: cub
   augment: false
-  trainDir: datasets/CUB_200_2011/train_cropped_augmented # Check the dataset path
+  trainDir: datasets/CUB_200_2011/train_crop_augmented # Check the dataset path
   projectDir: datasets/CUB_200_2011/train_crop # Check the dataset path
   testDir: datasets/CUB_200_2011/test_crop # Check the dataset path
 settingsConfig:
