@@ -19,7 +19,7 @@ settingsConfig:
   backbone:
     name: vgg19
     pretrained: true
-    prototypicalModel: protopnet
+    prototypicalModel: protopnet_new
     loadPath: checkpoints/vgg19_sd.pth
   target:
     name: vgg11

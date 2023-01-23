@@ -48,7 +48,7 @@ def init_proto_model(manager, classes, backbone):
             prototype_activation_function=prototype_activation_function,
             add_on_layers_type=add_on_layers_type
         )
-        model.load_state_dict(backbone.loadPath, map_location=torch.device('cpu'))
+        model.load_state_dict(torch.load(backbone.loadPath, map_location=torch.device('cpu')))
 
         checkpoint = None
 
