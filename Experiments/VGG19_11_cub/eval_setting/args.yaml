@@ -1,0 +1,47 @@
+dataDir: fill
+newRun: false
+runName: VGG19_11_cub
+serviceName: protopnet_evaluate_final
+dataConfig:
+  imgSize: 224
+  loaderName: cub
+  augment: false
+  trainDir: datasets/CUB_200_2011/train_crop_augmented # Check the dataset path
+  projectDir: datasets/CUB_200_2011/train_crop # Check the dataset path
+  testDir: datasets/CUB_200_2011/test_crop # Check the dataset path
+settingsConfig:
+  imgSize: 224
+  numFeatures: 128
+  prototypicalModel: protopnet
+  PrototypeActivationFunction: log
+  useCheckpointOptimizer: false
+  Teacherbackbone:
+    prototypicalModel: protopnet_new
+    name: vgg19
+    pretrained: true
+    loadPath: checkpoints/vgg19_sd.pth
+  StudentBaselinebackbone:
+    prototypicalModel: protopnet
+    name: vgg11
+    pretrained: true
+    loadPath: Experiments/VGG19_11_cub/student_VGG11/org/models/protopnet_1.pth
+  StudentKDbackbone:
+    prototypicalModel: protopnet
+    name: vgg11
+    pretrained: true
+    loadPath: Experiments/VGG19_11_cub/kd_VGG19_11/org/models/protopnet_1.pth
+  protoPNet:
+    numPrototypes: 2000
+    classSpecific: true
+    W1: 1
+    H1: 1
+  train:
+    seed: 12
+common:
+  cuda: true
+  mgpus: true
+  numWorkers: 0
+  testBatchSize: 1
+  testNumWorkers: 0
+  trainBatchSize: 4
+  trainNumWorkers: 1
