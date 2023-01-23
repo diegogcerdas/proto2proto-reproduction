@@ -110,8 +110,8 @@ class Service(object):
         for dist_th in distance_thresholds:
             self.evaluate(dist_th, teacher_data, stu_kd_data, stu_baseline_data, calc_pm=False)
 
-        plot_aap(self.aap_teacher , self.aap_baseline, self.aap_kd, distance_thresholds, self.manager.base_dir)
-        plot_ajs(self.ajs_baseline, self.ajs_kd, distance_thresholds, self.manager.base_dir)
+        # plot_aap(self.aap_teacher , self.aap_baseline, self.aap_kd, distance_thresholds, self.manager.base_dir)
+        # plot_ajs(self.ajs_baseline, self.ajs_kd, distance_thresholds, self.manager.base_dir)
 
         print("Distance thresholds", distance_thresholds)
         print("AAPs(teacher): ", self.aap_teacher)
