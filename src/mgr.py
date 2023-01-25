@@ -7,7 +7,7 @@ from src.utils.argument_parser import read_from_file, save_to_file
 from numpy.random import RandomState
 
 _base_dir = "Experiments"
-_service_list = ["recognition", "kd", "evaluate"]
+_service_list = ["recognition", "kd", "evaluate", "accuracy"]
 
 
 class Manager(object):
