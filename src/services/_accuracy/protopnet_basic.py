@@ -13,7 +13,7 @@ class Service(object):
         self.dataset_loader = dataset_loader
 
         self.teacher_model, _, _ = init_proto_model(
-            manager, dataset_loader.classes, manager.settingsConfig.Teacher)
+            manager, dataset_loader.classes, manager.settingsConfig.Teacherbackbone)
 
         self.student_kd_model, _, _ = init_proto_model(
             manager, dataset_loader.classes, manager.settingsConfig.StudentKDbackbone)
