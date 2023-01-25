@@ -40,9 +40,9 @@ class Service(object):
 
         if self.mgpus:
             # Optimize class distributions in leafs
-            self.eye = torch.eye(self.model.module._num_classes)
+            self.eye = torch.eye(self.student_kd_model.module._num_classes)
         else:
-            self.eye = torch.eye(self.model._num_classes)
+            self.eye = torch.eye(self.student_kd_model._num_classes)
 
         result_teacher, result_baseline, result_kd = self.evaluate()
         print('Teacher ', result_teacher)
