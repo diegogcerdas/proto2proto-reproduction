@@ -1,11 +1,13 @@
 from . import _recognition
 from . import _kd
 from . import _evaluate
+from . import _accuracy
 
 _service_factory = {
     'recognition': _recognition.init_module,
     'kd': _kd.init_module,
-    'evaluate': _evaluate.init_module
+    'evaluate': _evaluate.init_module,
+    'accuracy': _accuracy.init_module
 }
 
 
