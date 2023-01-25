@@ -3,12 +3,15 @@ import numpy as np
 from tqdm import tqdm
 
 
-def evaluate_model(model, loader, mgpus=True):
+def evaluate_model(model, loader, mgpus=True, num_classes=None):
 
-    if mgpus:
-        confusion_matrix = np.zeros((model.module._num_classes, model.module._num_classes), dtype=int)
-    else:
-        confusion_matrix = np.zeros((model._num_classes, model._num_classes), dtype=int)
+    if num_classes is None:
+        if mgpus:
+            num_classes = model.module._num_classes
+        else:
+            num_classes = model._num_classes
+
+    confusion_matrix = np.zeros((num_classes, num_classes), dtype=int)
 
     scalar_dict = {}
 

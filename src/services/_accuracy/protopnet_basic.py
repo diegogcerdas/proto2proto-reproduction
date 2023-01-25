@@ -24,7 +24,7 @@ class Service(object):
     def evaluate(self):
 
         result_teacher = evaluate.evaluate_model(self.teacher_model, self.dataset_loader.test_loader,
-                                         mgpus=self.mgpus)
+                                         mgpus=self.mgpus, num_classes=200)
         result_baseline = evaluate.evaluate_model(self.student_baseline_model, self.dataset_loader.test_loader,
                                          mgpus=self.mgpus)
         result_kd = evaluate.evaluate_model(self.student_kd_model, self.dataset_loader.test_loader,
