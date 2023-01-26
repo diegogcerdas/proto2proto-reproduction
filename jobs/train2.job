@@ -17,4 +17,4 @@ cd $HOME/diego/FACT-2023-G23
 # Activate your environment
 source activate myenv
 # Run your code
-srun sh scripts/train_baseline_cub_vgg16.sh
+srun sh scripts/eval_vgg19_16.sh
