@@ -17,5 +17,4 @@ cd $HOME/diego/FACT-2023-G23
 # Activate your environment
 source activate myenv
 # Run your code
-nvidia-smi
-srun sh eval_teacher_vgg19.sh
+srun sh scripts/train_kd_cub_vgg19_vgg16.sh
