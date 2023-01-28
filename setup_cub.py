@@ -13,7 +13,7 @@ target_path = './tmp_data/CUB_200_2011/CUB-200-2011.tgz'
 gdown.download(url, target_path, quiet=False)
  
 tar = tarfile.open(target_path, "r:gz")
-tar.extractall(path='./data')
+tar.extractall(path='./tmp_data')
 tar.close()
 print("CUB downloaded")
 
