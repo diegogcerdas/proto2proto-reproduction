@@ -13,6 +13,7 @@ class CUBDataLoader(object):
         test_batch_size: int = None,
         num_workers: int = 0,
         img_size=224,
+        normalize_test=True,
     ):
 
         assert train_dir or project_dir or test_dir
@@ -68,7 +69,7 @@ class CUBDataLoader(object):
 
         if self.test_dir is not None:
             assert self.test_batch_size is not None
-            test_set = ImageFolder(self.test_dir, transform=transform)
+            test_set = ImageFolder(self.test_dir, transform=(transform if normalize_test else transform_push))
             self.test_loader = DataLoader(
                 test_set,
                 batch_size=self.test_batch_size,
