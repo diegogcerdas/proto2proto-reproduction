@@ -1,0 +1,16 @@
+dataLoader:
+  testDir: datasets/CUB_200_2011/test_crop/
+  testBatchSize: 64
+  numWorkers: 8
+settingsConfig:
+  imgSize: 224
+  numFeatures: 128
+  PrototypeActivationFunction: log
+  backbone:
+    name: vgg11
+    pretrained: false
+    loadPath: checkpoints/vgg11_kd.pth
+  protoPNet:
+    numPrototypes: 2000
+    W1: 1
+    H1: 1

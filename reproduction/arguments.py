@@ -21,7 +21,7 @@ class Arguments:
         def __init__(self, args_dict_dataloader):
             self.testDir = args_dict_dataloader['testDir']
             self.testBatchSize = args_dict_dataloader['testBatchSize']
-            self.numWorkers = args_dict_dataloader['numWorkers']
+            self.numWorkers = args_dict_dataloader['numWorkers']            
 
     def __init__(self, filename):
         with open(filename, "r") as file:
