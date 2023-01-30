@@ -9,6 +9,7 @@ import numpy as np
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 import torch.nn.functional as F
+from scipy.optimize import linear_sum_assignment
 from .dataloader import CUBDataLoader
 
 
@@ -31,6 +32,143 @@ class PPNetWrapper:
         model.load_state_dict(state_dict)
         return model
 
+    def compute_indices_scores(self):
+        self.model.eval()
+        data_iter = iter(self.dataloader.test_loader_norm)
+        data = torch.empty(0)
+
+        for (xs, _) in tqdm(data_iter, desc="Computing indices and scores"):
+            with torch.no_grad():
+                xs = xs.to(self.device)
+                distances, _, _ = self.model.prototype_distances(xs)
+                scores, indices = F.max_pool2d(
+                    -distances,
+                    kernel_size=(distances.size()[2], distances.size()[3]),
+                    return_indices=True,
+                )
+                indices = indices.view(indices.shape[0], 1, self.model.num_prototypes)
+                scores = scores.view(scores.shape[0], 1, self.model.num_prototypes)
+                data = torch.cat([data, torch.cat([indices, scores], dim=1)], dim=0)
+
+        self.indices_scores = data
+
+    def compute_ajs(self, teacher_indices_scores, dist_th):
+        assert (
+            self.indices_scores is not None
+        ), "Please run self.compute_indices_scores()"
+        assert (
+            teacher_indices_scores is not None
+        ), "teacher_indices_scores cannot be None"
+
+        num_test_images = len(self.dataloader.test_loader_norm)
+        iou_student = 0.0
+
+        for ii in tqdm(range(num_test_images), desc="Computing AJS"):
+            if dist_th is None:
+                pruned_teacher_indices = teacher_indices_scores[ii, 0]
+                pruned_student_indices = self.indices_scores[ii, 0]
+            else:
+                pruned_teacher_indices = []
+                for jj, score in enumerate(teacher_indices_scores[ii, 1]):
+                    if abs(-score) <= dist_th:
+                        pruned_teacher_indices.append(teacher_indices_scores[ii, 0, jj])
+                pruned_student_indices = []
+                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                    if abs(-score) <= dist_th:
+                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+
+            iou_student += jaccard_similarity_basic(
+                pruned_teacher_indices, pruned_student_indices
+            )
+
+        ajs = iou_student / num_test_images
+
+        return ajs
+
+    def compute_aap(self, dist_th):
+        assert (
+            self.indices_scores is not None
+        ), "Please run self.compute_indices_scores()"
+
+        num_test_images = len(self.dataloader.test_loader_norm)
+        count_student = 0
+
+        for ii in tqdm(range(num_test_images), desc="Computing AAP"):
+            if dist_th is None:
+                pruned_student_indices = self.indices_scores[ii, 0]
+            else:
+                pruned_student_indices = []
+                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                    if abs(-score) <= dist_th:
+                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+
+            count_student += len(set(pruned_student_indices))
+
+        aap = count_student / num_test_images
+
+        return aap
+
+    def compute_pms(self, teacher_indices_scores, dist_th):
+
+        num_test_images = len(self.dataloader.test_loader_norm)
+
+        teacher_num_prototypes = 2000
+        student_num_prototypes = self.model.num_prototypes
+
+        teacher_prototypes = [[[], []] for _ in range(teacher_num_prototypes)]
+        student_prototypes = [[[], []] for _ in range(student_num_prototypes)]
+
+        for ii in tqdm(range(num_test_images), desc="Computing PMS"):
+
+            if dist_th is None:
+                pruned_teacher_indices = teacher_indices_scores[ii, 0]
+                pruned_student_indices = self.indices_scores[ii, 0]
+            else:
+                pruned_teacher_indices = []
+                for jj, score in enumerate(teacher_indices_scores[ii, 1]):
+                    if abs(-score) <= dist_th:
+                        pruned_teacher_indices.append(teacher_indices_scores[ii, 0, jj])
+                pruned_student_indices = []
+                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                    if abs(-score) <= dist_th:
+                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+
+            for jj in range(len(teacher_prototypes)):
+                if jj <= len(pruned_teacher_indices) - 1:
+                    name = "%04d" % ii + "%02d" % pruned_teacher_indices[jj]
+                    teacher_prototypes[jj][0].append(name)
+                    teacher_prototypes[jj][1].append(None)
+
+            for jj in range(len(student_prototypes)):
+                if jj <= len(pruned_student_indices) - 1:
+                    name = "%04d" % ii + "%02d" % pruned_student_indices[jj]
+                    student_prototypes[jj][0].append(name)
+                    student_prototypes[jj][1].append(None)
+
+        max_union_list = [
+            ii
+            for ii in range(
+                int(0.1 * num_test_images), num_test_images, int(0.1 * num_test_images)
+            )
+        ]
+        cost_list = []
+        for max_union in max_union_list:
+            iou_matrix = np.zeros((teacher_num_prototypes, student_num_prototypes))
+            for ii, teacher_prototype in enumerate(tqdm(teacher_prototypes)):
+                proto_row = jaccard_row(
+                    teacher_prototype, student_prototypes, max_union
+                )
+                iou_matrix[ii] = proto_row
+            iou_distance_matrix = 1.0 - iou_matrix
+            row_ind, col_ind = linear_sum_assignment(iou_distance_matrix)
+            cost = iou_distance_matrix[row_ind, col_ind].sum() / len(row_ind)
+            cost_list.append(cost)
+
+        avg_cost = sum(cost_list) / len(cost_list)
+        pms = 1.0 - avg_cost
+
+        return pms
+
     def compute_accuracy(self):
         num_classes = len(self.dataloader.classes)
         confusion_matrix = np.zeros((num_classes, num_classes), dtype=int)
@@ -51,113 +189,6 @@ class PPNetWrapper:
         acc = acc_from_cm(confusion_matrix)
 
         return acc
-
-    def compute_indices_scores(self):
-        self.model.eval()
-        data_iter = iter(self.dataloader.test_loader)
-        data = torch.empty(0)
-
-        for (xs, _) in tqdm(data_iter, desc="Computing indices and scores"):
-            with torch.no_grad():
-                xs = xs.to(self.device)
-                distances, _, _ = self.model.prototype_distances(xs)
-                scores, indices = F.max_pool2d(-distances,
-                                                 kernel_size=(distances.size()[2],
-                                                              distances.size()[3]),
-                                                 return_indices=True)
-                indices = indices.view(indices.shape[0], 1, self.model.num_prototypes)
-                scores = scores.view(scores.shape[0], 1, self.model.num_prototypes)
-                data = torch.cat([data, torch.cat([indices, scores], dim=1)], dim=0)
-
-        self.indices_scores = data
-
-    def compute_ajs(self, teacher_indices_scores, dist_th):
-        assert self.indices_scores is not None, "Please run self.compute_indices_scores()"
-        assert teacher_indices_scores is not None, "teacher_indices_scores cannot be None"
-
-        num_test_images = len(self.dataloader.test_loader)
-        iou_student = 0.0
-
-        for ii in tqdm(range(num_test_images), desc="Computing AJS"):
-            if dist_th is None:
-                pruned_teacher_indices = teacher_indices_scores[ii, 0]
-                pruned_student_indices = self.indices_scores[ii, 0]
-            else:
-                pruned_teacher_indices = []
-                for jj, score in enumerate(teacher_indices_scores[ii, 1]):
-                    if abs(-score) <= dist_th:
-                        pruned_teacher_indices.append(teacher_indices_scores[ii, 0, jj])
-                pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii, 1]):
-                    if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
-
-            iou_student += jaccard_similarity_basic(pruned_teacher_indices, pruned_student_indices)
-
-        ajs = iou_student / num_test_images
-
-        return ajs
-
-    def compute_aap(self, dist_th):
-        assert self.indices_scores is not None, "Please run self.compute_indices_scores()"
-
-        num_test_images = len(self.dataloader.test_loader)
-        count_student = 0
-
-        for ii in tqdm(range(num_test_images), desc="Computing AAP"):
-            if dist_th is None:
-                pruned_student_indices = self.indices_scores[ii, 0]
-            else:
-                pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii, 1]):
-                    if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
-                        
-            count_student += len(set(pruned_student_indices))
-
-        aap = count_student / num_test_images
-
-        return aap
-
-    # def compute_pms(self):
-
-    #     # Teacher, Student-kd IoU
-    #     mm = self.teacher_model.module.num_prototypes
-    #     nn = self.student_kd_model.module.num_prototypes
-
-    #     tchr_proto_id = ray.put(teacher_prototypes)
-    #     stu_kd_proto_id = ray.put(student_kd_prototypes)
-    #     stu_baseline_proto_id = ray.put(student_baseline_prototypes)
-    #     max_union_list = [ii for ii in range(int(0.1*num_test_images), num_test_images, int(0.1*num_test_images))]
-
-    #     cost_kd_list = []
-    #     for max_union in max_union_list:
-
-    #         iou_matrix = np.zeros((mm,nn))
-    #         obj_ids = []
-    #         for ii in tqdm(range(mm)):
-
-    #             obj_id = jaccard_row.remote(ii, tchr_proto_id, stu_kd_proto_id, max_union)
-    #             obj_ids.append(obj_id)
-
-    #             if ii % 30 == 0 or ii == mm - 1:
-    #                 results = ray.get(obj_ids)
-    #                 for kk in range(len(obj_ids)):
-    #                     index, sim = results[kk]
-    #                     iou_matrix[index] = sim
-    #                 obj_ids = []
-
-    #         assert len(obj_ids) == 0
-
-    #         iou_distance_matrix = 1.0 - iou_matrix
-    #         r_ts , c_stu_kd = linear_sum_assignment(iou_distance_matrix)
-    #         cost_kd = iou_distance_matrix[r_ts, c_stu_kd].sum() / len(r_ts)
-    #         cost_kd_list.append(cost_kd)
-
-    #     avg_cost_kd = sum(cost_kd_list) / len(cost_kd_list)
-    #     print("Average Similarity between prototypes(KD)", 1.0 - avg_cost_kd)
-
-    #     return
 
     def find_k_nearest_patches_to_prototypes(
         self,
@@ -192,16 +223,23 @@ class PPNetWrapper:
                             distance_map[j].shape,
                         )
                     )
-                    closest_patch_indices_in_distance_map_j = [0] + closest_patch_indices_in_distance_map_j
+                    closest_patch_indices_in_distance_map_j = [
+                        0
+                    ] + closest_patch_indices_in_distance_map_j
                     closest_patch_indices_in_img = compute_rf_prototype(
                         search_batch.size(2),
                         closest_patch_indices_in_distance_map_j,
                         protoL_rf_info,
                     )
                     closest_patch = search_batch[
-                        img_idx,:,
-                        closest_patch_indices_in_img[1] : closest_patch_indices_in_img[2],
-                        closest_patch_indices_in_img[3] : closest_patch_indices_in_img[4],
+                        img_idx,
+                        :,
+                        closest_patch_indices_in_img[1] : closest_patch_indices_in_img[
+                            2
+                        ],
+                        closest_patch_indices_in_img[3] : closest_patch_indices_in_img[
+                            4
+                        ],
                     ]
                     closest_patch = closest_patch.numpy()
                     closest_patch = np.transpose(closest_patch, (1, 2, 0))
@@ -234,7 +272,6 @@ class PPNetWrapper:
                         heapq.heappush(heaps[j], closest_patch)
                     else:
                         heapq.heappushpop(heaps[j], closest_patch)
-
 
         for j in range(n_prototypes):
             heaps[j].sort()
@@ -361,6 +398,36 @@ class PPNetWrapper:
 
         return labels_all_prototype
 
+
+def jaccard_row(teacher_prototype, student_prototypes, max_union):
+
+    proto_row = np.zeros(len(student_prototypes))
+    for jj in range(len(student_prototypes)):
+        proto_row[jj] = jaccard_similarity(
+            teacher_prototype, student_prototypes[jj], max_union=max_union
+        )
+
+    return proto_row
+
+
+def jaccard_similarity(list1, list2, max_union=100000.0):
+
+    s1 = set(list1[0])
+    s2 = set(list2[0])
+
+    intersect = len(s1.intersection(s2))
+    union = (len(s1) + len(s2)) - intersect
+
+    if union == 0:
+        return 0.0
+    elif intersect >= max_union:
+        return 1.0
+    else:
+        sim = float(intersect / min(union, max_union))
+
+    return sim
+
+
 def jaccard_similarity_basic(list1, list2):
 
     s1 = set(list1)
@@ -372,6 +439,6 @@ def jaccard_similarity_basic(list1, list2):
     if union == 0:
         return 0.0
 
-    sim = float(intersect/union)
+    sim = float(intersect / union)
 
     return sim
