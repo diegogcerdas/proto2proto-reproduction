@@ -35,7 +35,6 @@ class PPNetWrapper:
     def compute_indices_scores(self):
         self.model.eval()
         data_iter = iter(self.dataloader.test_loader)
-        # data = torch.empty(0).to(self.device)
         data = []
 
         for (xs, _) in tqdm(data_iter, desc="Computing indices and scores"):
@@ -50,10 +49,6 @@ class PPNetWrapper:
 
                 indices = indices.view(self.model.num_prototypes).detach().cpu().numpy().tolist()
                 scores = scores.view(self.model.num_prototypes).detach().cpu().numpy().tolist()
-
-                # indices = indices.view(indices.shape[0], 1, self.model.num_prototypes)
-                # scores = scores.view(scores.shape[0], 1, self.model.num_prototypes)
-                # data = torch.cat([data, torch.cat([indices, scores], dim=1)], dim=0)
                 data.append([indices, scores])
 
         self.indices_scores = data

@@ -9,7 +9,6 @@ class CUBDataLoader(object):
 
         self.test_dir = args.dataLoader.testDir
         self.project_dir  = args.dataLoader.projectDir
-        self.test_batch_size = args.dataLoader.testBatchSize
         self.num_workers = args.dataLoader.numWorkers
         self.img_size = args.imgSize
 
@@ -34,7 +33,7 @@ class CUBDataLoader(object):
         test_set = ImageFolder(self.test_dir, transform=transform)
         self.test_loader = DataLoader(
             test_set,
-            batch_size=self.test_batch_size,
+            batch_size=1,
             shuffle=False,
             num_workers=self.num_workers,
         )
@@ -42,7 +41,7 @@ class CUBDataLoader(object):
         project_set = ImageFolder(self.project_dir, transform=transform_push)
         self.project_loader = DataLoader(
             project_set,
-            batch_size=self.test_batch_size,
+            batch_size=1,
             shuffle=False,
             num_workers=self.num_workers,
         )

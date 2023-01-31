@@ -25,7 +25,7 @@ def init_model(args_filename, device):
     args = Arguments(args_filename)
     model = PPNetWrapper(args, device)
     model.compute_indices_scores()
-    #model.find_nearest_patches()
+    model.find_nearest_patches()
     return model
 
 def run_experiment(experiment_name, teacher, baseline_student, kd_student):
