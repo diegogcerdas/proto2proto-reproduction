@@ -1,0 +1,13 @@
+Device: cuda:0
+Initializing from arguments/vgg19_teacher.yaml.
+Computing indices and scores:   0%|          | 0/91 [00:00<?, ?it/s]Computing indices and scores:   0%|          | 0/91 [00:00<?, ?it/s]
+Traceback (most recent call last):
+  File "example.py", line 60, in <module>
+    main()
+  File "example.py", line 11, in main
+    teacher = init_model('arguments/vgg19_teacher.yaml', device)
+  File "example.py", line 25, in init_model
+    model.compute_indices_scores()
+  File "/home/lcur0855/rep/FACT-2023-G23/reproduction/wrapper.py", line 51, in compute_indices_scores
+    data = torch.cat([data, torch.cat([indices, scores], dim=1)], dim=0)
+RuntimeError: All input tensors must be on the same device. Received cpu and cuda:0
