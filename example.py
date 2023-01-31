@@ -23,7 +23,7 @@ def init_model(args_filename, device):
     args = Arguments(args_filename)
     model = PPNetWrapper(args, device)
     model.compute_indices_scores()
-    model.find_nearest_patches()
+    #model.find_nearest_patches()
     return model
 
 def run_experiment(experiment_name, teacher, baseline_student, kd_student):
@@ -48,11 +48,11 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
         }
         pms, best_allocation = baseline_student.compute_pms(dist_threshold, teacher.indices_scores)
         results['pms']['baseline_student'] = pms
-        np.save(os.path.join('results', experiment_name, dist_threshold, 'best_allocation_baseline.npy'), best_allocation)
+        np.save(os.path.join('results', experiment_name, str(dist_threshold), 'best_allocation_baseline.npy'), best_allocation)
         pms, best_allocation = kd_student.compute_pms(dist_threshold, teacher.indices_scores)
         results['pms']['kd_student'] = pms
-        np.save(os.path.join('results', experiment_name, dist_threshold, 'best_allocation_kd.npy'), best_allocation)
-        with open(os.path.join('results', experiment_name, dist_threshold, 'metrics.yaml'), 'w') as file:
+        np.save(os.path.join('results', experiment_name, str(dist_threshold), 'best_allocation_kd.npy'), best_allocation)
+        with open(os.path.join('results', experiment_name, str(dist_threshold), 'metrics.yaml'), 'w') as file:
             yaml.dump(results, file)
     print(f'Finished experiment: {experiment_name}')
 
