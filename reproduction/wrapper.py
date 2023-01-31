@@ -71,17 +71,17 @@ class PPNetWrapper:
 
         for ii in tqdm(range(num_test_images), desc="Computing AJS"):
             if dist_th is None:
-                pruned_teacher_indices = teacher_indices_scores[ii, 0]
-                pruned_student_indices = self.indices_scores[ii, 0]
+                pruned_teacher_indices = teacher_indices_scores[ii][0]
+                pruned_student_indices = self.indices_scores[ii][0]
             else:
                 pruned_teacher_indices = []
-                for jj, score in enumerate(teacher_indices_scores[ii, 1]):
+                for jj, score in enumerate(teacher_indices_scores[ii][1]):
                     if abs(-score) <= dist_th:
-                        pruned_teacher_indices.append(teacher_indices_scores[ii, 0, jj])
+                        pruned_teacher_indices.append(teacher_indices_scores[ii][0][jj])
                 pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                for jj, score in enumerate(self.indices_scores[ii][1]):
                     if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+                        pruned_student_indices.append(self.indices_scores[ii][0][jj])
 
             iou_student += jaccard_similarity_basic(
                 pruned_teacher_indices, pruned_student_indices
@@ -101,12 +101,12 @@ class PPNetWrapper:
 
         for ii in tqdm(range(num_test_images), desc="Computing AAP"):
             if dist_th is None:
-                pruned_student_indices = self.indices_scores[ii, 0]
+                pruned_student_indices = self.indices_scores[ii][0]
             else:
                 pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                for jj, score in enumerate(self.indices_scores[ii][1]):
                     if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+                        pruned_student_indices.append(self.indices_scores[ii][0][jj])
 
             count_student += len(set(pruned_student_indices))
 
@@ -131,17 +131,17 @@ class PPNetWrapper:
         for ii in tqdm(range(num_test_images), desc="Computing PMS"):
 
             if dist_th is None:
-                pruned_teacher_indices = teacher_indices_scores[ii, 0]
-                pruned_student_indices = self.indices_scores[ii, 0]
+                pruned_teacher_indices = teacher_indices_scores[ii][0]
+                pruned_student_indices = self.indices_scores[ii][0]
             else:
                 pruned_teacher_indices = []
-                for jj, score in enumerate(teacher_indices_scores[ii, 1]):
+                for jj, score in enumerate(teacher_indices_scores[ii][1]):
                     if abs(-score) <= dist_th:
-                        pruned_teacher_indices.append(teacher_indices_scores[ii, 0, jj])
+                        pruned_teacher_indices.append(teacher_indices_scores[ii][0][jj])
                 pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii, 1]):
+                for jj, score in enumerate(self.indices_scores[ii][1]):
                     if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii, 0, jj])
+                        pruned_student_indices.append(self.indices_scores[ii][0][jj])
 
             for jj in range(len(teacher_prototypes)):
                 if jj <= len(pruned_teacher_indices) - 1:
