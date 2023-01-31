@@ -7,7 +7,6 @@ from .lib.protopnet.find_nearest import imsave_with_bbox, ImagePatch
 from .lib.protopnet.helpers import makedir, find_high_activation_crop
 import numpy as np
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 from .dataloader import CUBDataLoader
@@ -20,6 +19,7 @@ class PPNetWrapper:
         self.device = device
         self.model = self.load_model().to(device)
         self.indices_scores = None
+        self.save_img_dir = args.saveImgDir
 
     def load_model(self):
         features, _ = init_backbone(self.args.backbone)
@@ -34,7 +34,7 @@ class PPNetWrapper:
 
     def compute_indices_scores(self):
         self.model.eval()
-        data_iter = iter(self.dataloader.test_loader_norm)
+        data_iter = iter(self.dataloader.test_loader)
         data = torch.empty(0)
 
         for (xs, _) in tqdm(data_iter, desc="Computing indices and scores"):
@@ -52,7 +52,7 @@ class PPNetWrapper:
 
         self.indices_scores = data
 
-    def compute_ajs(self, teacher_indices_scores, dist_th):
+    def compute_ajs(self, dist_th, teacher_indices_scores):
         assert (
             self.indices_scores is not None
         ), "Please run self.compute_indices_scores()"
@@ -60,7 +60,7 @@ class PPNetWrapper:
             teacher_indices_scores is not None
         ), "teacher_indices_scores cannot be None"
 
-        num_test_images = len(self.dataloader.test_loader_norm)
+        num_test_images = len(self.dataloader.test_loader)
         iou_student = 0.0
 
         for ii in tqdm(range(num_test_images), desc="Computing AJS"):
@@ -90,7 +90,7 @@ class PPNetWrapper:
             self.indices_scores is not None
         ), "Please run self.compute_indices_scores()"
 
-        num_test_images = len(self.dataloader.test_loader_norm)
+        num_test_images = len(self.dataloader.test_loader)
         count_student = 0
 
         for ii in tqdm(range(num_test_images), desc="Computing AAP"):
@@ -108,15 +108,19 @@ class PPNetWrapper:
 
         return aap
 
-    def compute_pms(self, teacher_indices_scores, dist_th):
+    def compute_pms(self, dist_th, teacher_indices_scores):
+        assert (
+            self.indices_scores is not None
+        ), "Please run self.compute_indices_scores()"
+        assert (
+            teacher_indices_scores is not None
+        ), "teacher_indices_scores cannot be None"
 
-        num_test_images = len(self.dataloader.test_loader_norm)
+        num_test_images = len(self.dataloader.test_loader)
+        num_prototypes = self.model.num_prototypes
 
-        teacher_num_prototypes = 2000
-        student_num_prototypes = self.model.num_prototypes
-
-        teacher_prototypes = [[[], []] for _ in range(teacher_num_prototypes)]
-        student_prototypes = [[[], []] for _ in range(student_num_prototypes)]
+        teacher_prototypes = [[[], []] for _ in range(num_prototypes)]
+        student_prototypes = [[[], []] for _ in range(num_prototypes)]
 
         for ii in tqdm(range(num_test_images), desc="Computing PMS"):
 
@@ -151,9 +155,12 @@ class PPNetWrapper:
                 int(0.1 * num_test_images), num_test_images, int(0.1 * num_test_images)
             )
         ]
+
+        lowest_cost = np.inf
+        best_allocation = None
         cost_list = []
         for max_union in max_union_list:
-            iou_matrix = np.zeros((teacher_num_prototypes, student_num_prototypes))
+            iou_matrix = np.zeros((num_prototypes, num_prototypes))
             for ii, teacher_prototype in enumerate(tqdm(teacher_prototypes)):
                 proto_row = jaccard_row(
                     teacher_prototype, student_prototypes, max_union
@@ -162,18 +169,21 @@ class PPNetWrapper:
             iou_distance_matrix = 1.0 - iou_matrix
             row_ind, col_ind = linear_sum_assignment(iou_distance_matrix)
             cost = iou_distance_matrix[row_ind, col_ind].sum() / len(row_ind)
+            if cost < lowest_cost:
+                lowest_cost = cost
+                best_allocation = (row_ind, col_ind)
             cost_list.append(cost)
 
         avg_cost = sum(cost_list) / len(cost_list)
         pms = 1.0 - avg_cost
 
-        return pms
+        return pms, best_allocation
 
     def compute_accuracy(self):
         num_classes = len(self.dataloader.classes)
         confusion_matrix = np.zeros((num_classes, num_classes), dtype=int)
         self.model.eval()
-        data_iter = iter(self.dataloader.test_loader_norm)
+        data_iter = iter(self.dataloader.test_loader)
 
         for (xs, ys) in tqdm(data_iter, desc="Computing accuracy"):
             with torch.no_grad():
@@ -190,12 +200,7 @@ class PPNetWrapper:
 
         return acc
 
-    def find_k_nearest_patches_to_prototypes(
-        self,
-        dataloader,  # pytorch dataloader (must be unnormalized in [0,1])
-        k=3,
-        root_dir_for_saving_images="./nearest",
-    ):
+    def find_nearest_patches(self, k=5):
         self.model.eval()
         n_prototypes = self.model.num_prototypes
         prototype_shape = self.model.prototype_shape
@@ -206,7 +211,9 @@ class PPNetWrapper:
         for _ in range(n_prototypes):
             heaps.append([])
 
-        for (search_batch, search_y) in tqdm(dataloader, desc="Finding patches"):
+        for (search_batch, search_y) in tqdm(
+            self.dataloader.project_loader, desc="Finding patches"
+        ):
 
             with torch.no_grad():
                 search_batch = search_batch.to(self.device)
@@ -273,24 +280,13 @@ class PPNetWrapper:
                     else:
                         heapq.heappushpop(heaps[j], closest_patch)
 
-        for j in range(n_prototypes):
+        for j in tqdm(range(n_prototypes), desc="Saving images"):
             heaps[j].sort()
             heaps[j] = heaps[j][::-1]
-            dir_for_saving_images = os.path.join(root_dir_for_saving_images, "%05d" % j)
+            dir_for_saving_images = os.path.join(self.save_img_dir, "%05d" % j)
             makedir(dir_for_saving_images)
-            labels = []
 
             for i, patch in enumerate(heaps[j]):
-
-                plt.imsave(
-                    fname=os.path.join(
-                        dir_for_saving_images,
-                        "%02d_" % (i + 1) + "nearest" + "_original.png",
-                    ),
-                    arr=patch.original_img,
-                    vmin=0.0,
-                    vmax=1.0,
-                )
 
                 img_size = patch.original_img.shape[0]
                 upsampled_act_pattern = cv2.resize(
@@ -298,83 +294,15 @@ class PPNetWrapper:
                     dsize=(img_size, img_size),
                     interpolation=cv2.INTER_CUBIC,
                 )
-                rescaled_act_pattern = upsampled_act_pattern - np.amin(
-                    upsampled_act_pattern
-                )
-                rescaled_act_pattern = rescaled_act_pattern / np.amax(
-                    rescaled_act_pattern
-                )
-                heatmap = cv2.applyColorMap(
-                    np.uint8(255 * rescaled_act_pattern), cv2.COLORMAP_JET
-                )
-                heatmap = np.float32(heatmap) / 255
-                heatmap = heatmap[..., ::-1]
-                overlayed_original_img = 0.5 * patch.original_img + 0.3 * heatmap
 
-                # if different from original image, save the patch (i.e. receptive field)
-                if patch.patch.shape[0] != img_size or patch.patch.shape[1] != img_size:
-                    np.save(
-                        os.path.join(
-                            dir_for_saving_images,
-                            "%02d_" % (i + 1)
-                            + "nearest-"
-                            + "_receptive_field_indices.npy",
-                        ),
-                        patch.patch_indices,
-                    )
-                    plt.imsave(
-                        fname=os.path.join(
-                            dir_for_saving_images,
-                            "%02d_" % (i + 1) + "nearest-" + "_receptive_field.png",
-                        ),
-                        arr=patch.patch,
-                        vmin=0.0,
-                        vmax=1.0,
-                    )
-                    # save the receptive field patch with heatmap
-                    overlayed_patch = overlayed_original_img[
-                        patch.patch_indices[0] : patch.patch_indices[1],
-                        patch.patch_indices[2] : patch.patch_indices[3],
-                        :,
-                    ]
-                    plt.imsave(
-                        fname=os.path.join(
-                            dir_for_saving_images,
-                            "%02d_" % (i + 1)
-                            + "nearest-"
-                            + "_receptive_field_with_heatmap.png",
-                        ),
-                        arr=overlayed_patch,
-                        vmin=0.0,
-                        vmax=1.0,
-                    )
-
-                # save the highly activated patch
                 high_act_patch_indices = find_high_activation_crop(
                     upsampled_act_pattern
-                )
-                high_act_patch = patch.original_img[
-                    high_act_patch_indices[0] : high_act_patch_indices[1],
-                    high_act_patch_indices[2] : high_act_patch_indices[3],
-                    :,
-                ]
-
-                plt.imsave(
-                    fname=os.path.join(
-                        dir_for_saving_images,
-                        "%02d_" % (i + 1) + "nearest" + "_high_act_patch.png",
-                    ),
-                    arr=high_act_patch,
-                    vmin=0.0,
-                    vmax=1.0,
                 )
 
                 imsave_with_bbox(
                     fname=os.path.join(
                         dir_for_saving_images,
-                        "%02d_" % (i + 1)
-                        + "nearest"
-                        + "_high_act_patch_in_original_img.png",
+                        "%02d" % (i + 1) + ".png",
                     ),
                     img_rgb=patch.original_img,
                     bbox_height_start=high_act_patch_indices[0],
@@ -384,15 +312,12 @@ class PPNetWrapper:
                     color=(0, 255, 255),
                 )
 
-            labels = np.array([patch.label for patch in heaps[j]])
-            np.save(os.path.join(dir_for_saving_images, "class_id.npy"), labels)
-
         labels_all_prototype = np.array(
             [[patch.label for patch in heaps[j]] for j in range(n_prototypes)]
         )
 
         np.save(
-            os.path.join(root_dir_for_saving_images, "full_class_id.npy"),
+            os.path.join(self.save_img_dir, "class_ids.npy"),
             labels_all_prototype,
         )
 

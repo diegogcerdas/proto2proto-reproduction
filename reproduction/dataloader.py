@@ -8,6 +8,7 @@ class CUBDataLoader(object):
     def __init__(self, args: Arguments) -> None:
 
         self.test_dir = args.dataLoader.testDir
+        self.project_dir  = args.dataLoader.projectDir
         self.test_batch_size = args.dataLoader.testBatchSize
         self.num_workers = args.dataLoader.numWorkers
         self.img_size = args.imgSize
@@ -30,21 +31,22 @@ class CUBDataLoader(object):
             ]
         )
 
-        test_set_norm = ImageFolder(self.test_dir, transform=(transform))
-        self.test_loader_norm = DataLoader(
-            test_set_norm,
-            batch_size=self.test_batch_size,
-            shuffle=False,
-            num_workers=self.num_workers,
-        )
-
-        test_set = ImageFolder(self.test_dir, transform=(transform_push))
+        test_set = ImageFolder(self.test_dir, transform=transform)
         self.test_loader = DataLoader(
             test_set,
             batch_size=self.test_batch_size,
             shuffle=False,
             num_workers=self.num_workers,
         )
+
+        project_set = ImageFolder(self.project_dir, transform=transform_push)
+        self.project_loader = DataLoader(
+            project_set,
+            batch_size=self.test_batch_size,
+            shuffle=False,
+            num_workers=self.num_workers,
+        )
+
         self.classes = test_set.classes
 
         for i in range(len(self.classes)):
