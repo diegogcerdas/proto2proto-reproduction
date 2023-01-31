@@ -47,7 +47,7 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
             },
             'pms': {}
         }
-        dir = os.path.join('results', experiment_name, dist_threshold)
+        dir = os.path.join('results', experiment_name, str(dist_threshold))
         makedir(dir)
         pms, best_allocation = baseline_student.compute_pms(dist_threshold, teacher.indices_scores)
         results['pms']['baseline_student'] = pms
