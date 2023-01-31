@@ -2,6 +2,7 @@ import torch, os, yaml
 import numpy as np
 from reproduction.wrapper import PPNetWrapper
 from reproduction.arguments import Arguments
+from reproduction.lib.protopnet.helpers import makedir
 
 def main():
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
@@ -46,13 +47,15 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
             },
             'pms': {}
         }
+        dir = os.path.join('results', experiment_name, dist_threshold)
+        makedir(dir)
         pms, best_allocation = baseline_student.compute_pms(dist_threshold, teacher.indices_scores)
         results['pms']['baseline_student'] = pms
-        np.save(os.path.join('results', experiment_name, str(dist_threshold), 'best_allocation_baseline.npy'), best_allocation)
+        np.save(os.path.join(dir, 'best_allocation_baseline.npy'), best_allocation)
         pms, best_allocation = kd_student.compute_pms(dist_threshold, teacher.indices_scores)
         results['pms']['kd_student'] = pms
-        np.save(os.path.join('results', experiment_name, str(dist_threshold), 'best_allocation_kd.npy'), best_allocation)
-        with open(os.path.join('results', experiment_name, str(dist_threshold), 'metrics.yaml'), 'w') as file:
+        np.save(os.path.join(dir, 'best_allocation_kd.npy'), best_allocation)
+        with open(os.path.join(dir, 'metrics.yaml'), 'w') as file:
             yaml.dump(results, file)
     print(f'Finished experiment: {experiment_name}')
 
