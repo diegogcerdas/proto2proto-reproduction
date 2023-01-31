@@ -5,7 +5,7 @@
 #SBATCH --job-name=RepTrainTeacher
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=3
-#SBATCH --time=01:30:00
+#SBATCH --time=5:00:00
 #SBATCH --mem=32000M
 #SBATCH --output=slurm_output_%A.out
 
@@ -17,4 +17,4 @@ cd $HOME/diego/FACT-2023-G23
 # Activate your environment
 source activate myenv
 # Run your code
-srun sh scripts/accs_vgg19_16.sh
+srun sh scripts/train_teacher_cub.sh
