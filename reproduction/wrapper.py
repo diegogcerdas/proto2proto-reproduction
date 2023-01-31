@@ -248,10 +248,10 @@ class PPNetWrapper:
                             4
                         ],
                     ]
-                    closest_patch = closest_patch.numpy()
+                    closest_patch = closest_patch.cpu().numpy()
                     closest_patch = np.transpose(closest_patch, (1, 2, 0))
 
-                    original_img = search_batch[img_idx].numpy()
+                    original_img = search_batch[img_idx].cpu().numpy()
                     original_img = np.transpose(original_img, (1, 2, 0))
 
                     if self.model.prototype_activation_function == "log":
