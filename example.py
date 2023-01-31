@@ -1,10 +1,19 @@
-import torch, os, yaml
+import torch, os, yaml, random
 import numpy as np
 from reproduction.wrapper import PPNetWrapper
 from reproduction.arguments import Arguments
 from reproduction.lib.protopnet.helpers import makedir
 
 def main():
+
+    seed = 12
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    torch.manual_seed(seed)
+
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     print(f"Device: {device}")
 
