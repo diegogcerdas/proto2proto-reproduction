@@ -35,7 +35,7 @@ class PPNetWrapper:
     def compute_indices_scores(self):
         self.model.eval()
         data_iter = iter(self.dataloader.test_loader)
-        data = torch.empty(0)
+        data = torch.empty(0).to(self.device)
 
         for (xs, _) in tqdm(data_iter, desc="Computing indices and scores"):
             with torch.no_grad():
