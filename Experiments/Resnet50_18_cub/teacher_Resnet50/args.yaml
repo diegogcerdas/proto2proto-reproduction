@@ -20,7 +20,7 @@ settingsConfig:
     loadPath: null
     prototypicalModel: protopnet
   protoPNet:
-    numPrototypes: 1960
+    numPrototypes: 2000
     classSpecific: true
     W1: 1
     H1: 1
