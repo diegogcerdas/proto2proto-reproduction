@@ -81,7 +81,7 @@ class PPNetWrapper:
                 pruned_teacher_indices, pruned_student_indices
             )
 
-        ajs = iou_student / num_test_images
+        ajs = float(iou_student / num_test_images)
 
         return ajs
 
@@ -104,7 +104,7 @@ class PPNetWrapper:
 
             count_student += len(set(pruned_student_indices))
 
-        aap = count_student / num_test_images
+        aap = float(count_student / num_test_images)
 
         return aap
 
@@ -174,7 +174,7 @@ class PPNetWrapper:
                 best_allocation = (row_ind, col_ind)
             cost_list.append(cost)
 
-        avg_cost = sum(cost_list) / len(cost_list)
+        avg_cost = float(sum(cost_list) / len(cost_list))
         pms = 1.0 - avg_cost
 
         return pms, best_allocation
@@ -196,7 +196,7 @@ class PPNetWrapper:
             for y_pred, y_true in zip(ys_pred, ys):
                 confusion_matrix[y_true][y_pred] += 1
 
-        acc = acc_from_cm(confusion_matrix)
+        acc = float(acc_from_cm(confusion_matrix))
 
         return acc
 

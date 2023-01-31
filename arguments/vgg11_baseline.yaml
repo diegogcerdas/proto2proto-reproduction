@@ -1,7 +1,7 @@
 dataLoader:
   testDir: datasets/CUB_200_2011/test_crop/
   projectDir: datasets/CUB_200_2011/train_crop/
-  testBatchSize: 64
+  testBatchSize: 32
   numWorkers: 8
 settingsConfig:
   imgSize: 224
