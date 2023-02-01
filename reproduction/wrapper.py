@@ -171,6 +171,7 @@ class PPNetWrapper:
                 lowest_cost = cost
                 best_allocation = (row_ind, col_ind)
             cost_list.append(cost)
+            print(cost)
 
         avg_cost = float(sum(cost_list) / len(cost_list))
         pms = 1.0 - avg_cost
@@ -335,13 +336,8 @@ def jaccard_row(teacher_prototype, student_prototypes, max_union, device):
 
 def jaccard_similarity(tensor1, tensor2, max_union=100000.0):
 
-    print(tensor1.shape)
-    print(tensor1[:10])
-    print(tensor2[:10])
-    print('-----------------')
-
-    s1 = set(tensor1[0].unique())
-    s2 = set(tensor2[0].unique())
+    s1 = set(tensor1.unique())
+    s2 = set(tensor2.unique())
 
     intersect = len(s1.intersection(s2))
     union = (len(s1) + len(s2)) - intersect
