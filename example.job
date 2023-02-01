@@ -17,4 +17,4 @@ cd $HOME/rep/FACT-2023-G23
 # Activate your environment
 source activate myenv
 # Run your code
-python -u  example.py
+python -u example.py

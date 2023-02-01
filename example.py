@@ -25,12 +25,23 @@ def init_model(args_filename, device):
     args = Arguments(args_filename)
     model = PPNetWrapper(args, device)
     model.compute_indices_scores()
-    #model.find_nearest_patches()
     return model
 
 def run_experiment(experiment_name, teacher, baseline_student, kd_student):
     print(f'Running experiment: {experiment_name}')
-    for dist_threshold in [0.1]:
+    results_dir = os.path.join('results', experiment_name, str(dist_threshold))
+    makedir(results_dir)
+    
+    teacher_accuracy = teacher.compute_accuracy()
+    baseline_accuracy = baseline_student.compute_accuracy()
+    kd_accuracy = kd_student.compute_accuracy()
+    
+    baseline_pms, baseline_best_allocation = baseline_student.compute_pms(teacher.indices_scores)
+    np.save(os.path.join(results_dir, 'baseline_best_allocation.npy'), baseline_best_allocation)
+    kd_pms, kd_best_allocation = kd_student.compute_pms(teacher.indices_scores)
+    np.save(os.path.join(results_dir, 'kd_best_allocation.npy'), kd_best_allocation)
+
+    for dist_threshold in [0.01, 0.1, 0.2, 0.45, 1.0, 3.0, 5.0, None]:
         results = {
             'aap': {
                 'teacher': teacher.compute_aap(dist_threshold),
@@ -42,22 +53,20 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
                 'kd_student': kd_student.compute_ajs(dist_threshold, teacher.indices_scores)
             },
             'accuracy': {
-                'teacher': teacher.compute_accuracy(),
-                'baseline_student': baseline_student.compute_accuracy(),
-                'kd_student': kd_student.compute_accuracy()
+                'teacher': teacher_accuracy,
+                'baseline_student': baseline_accuracy,
+                'kd_student': kd_accuracy
             },
-            'pms': {}
+            'pms': {
+                'baseline_student': baseline_pms,
+                'kd_student': kd_pms
+            }
         }
-        dir = os.path.join('results', experiment_name, str(dist_threshold))
-        makedir(dir)
-        pms, best_allocation = baseline_student.compute_pms(teacher.indices_scores)
-        results['pms']['baseline_student'] = pms
-        np.save(os.path.join(dir, 'best_allocation_baseline.npy'), best_allocation)
-        pms, best_allocation = kd_student.compute_pms(teacher.indices_scores)
-        results['pms']['kd_student'] = pms
-        np.save(os.path.join(dir, 'best_allocation_kd.npy'), best_allocation)
-        with open(os.path.join(dir, 'metrics.yaml'), 'w') as file:
+        results_dist_dir = os.path.join(results_dir, str(dist_threshold))
+        makedir(results_dist_dir)
+        with open(os.path.join(results_dist_dir, 'metrics.yaml'), 'w') as file:
             yaml.dump(results, file)
+
     print(f'Finished experiment: {experiment_name}')
 
 if __name__ == '__main__':
