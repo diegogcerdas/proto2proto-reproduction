@@ -37,7 +37,7 @@ settingsConfig:
       weight: 1.0e-04
   train:
     seed: 12
-    maxEpochs: 100  # 300
+    maxEpochs: 103  # 300
     lrNet: 2.0e-04
     lrBlock: 3.0e-03
     lrProto: 3.0e-03
