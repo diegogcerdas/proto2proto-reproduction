@@ -1,6 +1,6 @@
 #!/bin/sh
 
-nonRandom=org
+nonRandom=org2
 runName=student_VGG11
 newRun=false
 serviceType=recognition

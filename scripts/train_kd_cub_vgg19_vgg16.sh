@@ -1,6 +1,6 @@
 #!/bin/sh
 
-nonRandom=org
+nonRandom=org2
 runName=kd_VGG19_16
 newRun=false
 serviceType=kd
