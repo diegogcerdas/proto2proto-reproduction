@@ -158,50 +158,20 @@ class PPNetWrapper:
             )
         ]
 
+        teacher_prototypes = torch.tensor(teacher_prototypes).to(self.device)
+        student_prototypes = torch.tensor(student_prototypes).to(self.device)
+
         lowest_cost = np.inf
         best_allocation = None
-        # cost_list = []
-        # for max_union in max_union_list:
-        #     iou_matrix = np.zeros((num_prototypes, num_prototypes))
-        #     for ii, teacher_prototype in enumerate(tqdm(teacher_prototypes)):
-        #         proto_row = jaccard_row(
-        #             teacher_prototype, student_prototypes, max_union
-        #         )
-        #         iou_matrix[ii] = proto_row
-        #     iou_distance_matrix = 1.0 - iou_matrix
-        #     row_ind, col_ind = linear_sum_assignment(iou_distance_matrix)
-        #     cost = iou_distance_matrix[row_ind, col_ind].sum() / len(row_ind)
-        #     if cost < lowest_cost:
-        #         lowest_cost = cost
-        #         best_allocation = (row_ind, col_ind)
-        #     cost_list.append(cost)
-
-        # avg_cost = float(sum(cost_list) / len(cost_list))
-        # pms = 1.0 - avg_cost
-
-        tchr_proto_id = ray.put(teacher_prototypes)
-        stu_proto_id = ray.put(student_prototypes)
         cost_list = []
         for max_union in max_union_list:
-
-            iou_matrix = np.zeros((num_prototypes, num_prototypes))
-
-            obj_ids = []
-            for ii in tqdm(range(num_prototypes)):
-
-                obj_id = jaccard_row.remote(ii, tchr_proto_id, stu_proto_id, max_union)
-                obj_ids.append(obj_id)
-
-                if ii % 30 == 0 or ii == num_prototypes - 1:
-                    results = ray.get(obj_ids)
-                    for kk in range(len(obj_ids)):
-                        index, sim = results[kk]
-                        iou_matrix[index] = sim
-                    obj_ids = []
-
-            assert len(obj_ids) == 0
-
-            iou_distance_matrix = 1.0 - iou_matrix
+            iou_matrix = torch.zeros((num_prototypes, num_prototypes)).to(self.device)
+            for ii, teacher_prototype in enumerate(tqdm(teacher_prototypes)):
+                proto_row = jaccard_row(
+                    teacher_prototype, student_prototypes, max_union, self.device
+                )
+                iou_matrix[ii] = proto_row
+            iou_distance_matrix = (1.0 - iou_matrix).cpu().numpy()
             row_ind, col_ind = linear_sum_assignment(iou_distance_matrix)
             cost = iou_distance_matrix[row_ind, col_ind].sum() / len(row_ind)
             if cost < lowest_cost:
@@ -209,11 +179,8 @@ class PPNetWrapper:
                 best_allocation = (row_ind, col_ind)
             cost_list.append(cost)
 
-        avg_cost = sum(cost_list) / len(cost_list)
+        avg_cost = float(sum(cost_list) / len(cost_list))
         pms = 1.0 - avg_cost
-
-        ray.get(tchr_proto_id)
-        ray.get(stu_proto_id)
 
         return pms, best_allocation
 
@@ -362,31 +329,21 @@ class PPNetWrapper:
         return labels_all_prototype
 
 
-@ray.remote
-def jaccard_row(ii, tchr_prototypes, stu_prototypes, max_union):
+def jaccard_row(teacher_prototype, student_prototypes, max_union, device):
 
-    proto_row = np.zeros(len(stu_prototypes))
-    for jj in range(len(stu_prototypes)):
-        proto_row[jj] = jaccard_similarity(tchr_prototypes[ii], stu_prototypes[jj], max_union=max_union)
+    proto_row = torch.zeros(len(student_prototypes)).to(device)
+    for jj in range(len(student_prototypes)):
+        proto_row[jj] = jaccard_similarity(
+            teacher_prototype, student_prototypes[jj], max_union=max_union
+        )
 
-    return ii, proto_row
-
-
-# def jaccard_row(teacher_prototype, student_prototypes, max_union):
-
-#     proto_row = np.zeros(len(student_prototypes))
-#     for jj in range(len(student_prototypes)):
-#         proto_row[jj] = jaccard_similarity(
-#             teacher_prototype, student_prototypes[jj], max_union=max_union
-#         )
-
-#     return proto_row
+    return proto_row
 
 
-def jaccard_similarity(list1, list2, max_union=100000.0):
+def jaccard_similarity(tensor1, tensor2, max_union=100000.0):
 
-    s1 = set(list1[0])
-    s2 = set(list2[0])
+    s1 = set(tensor1[0].unique())
+    s2 = set(tensor2[0].unique())
 
     intersect = len(s1.intersection(s2))
     union = (len(s1) + len(s2)) - intersect
