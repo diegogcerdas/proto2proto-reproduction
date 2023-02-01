@@ -143,12 +143,12 @@ class PPNetWrapper:
         teacher_size = teacher_prototypes.shape[0]
         all_prototypes = np.reshape(all_prototypes, (-1))
         encoded_names = le.fit_transform(all_prototypes)
-        encoded_names = torch.as_tensor(encoded_names).view(all_shape).to(self.device)
+        encoded_names = torch.as_tensor(encoded_names).view(all_shape).cpu()
         teacher_prototypes = encoded_names[:teacher_size]
         student_prototypes = encoded_names[teacher_size:]
 
-        teacher_prototypes = [p.unique() for p in teacher_prototypes]
-        student_prototypes = [p.unique() for p in student_prototypes]
+        teacher_prototypes = [set(p.unique().numpy()) for p in teacher_prototypes]
+        student_prototypes = [set(p.unique().numpy()) for p in student_prototypes]
 
         max_union_list = [
             ii
@@ -337,10 +337,10 @@ def jaccard_row(teacher_prototype, student_prototypes, max_union, device):
     return proto_row
 
 
-def jaccard_similarity(tensor1, tensor2, max_union=100000.0):
+def jaccard_similarity(s1, s2, max_union=100000.0):
 
-    s1 = set(tensor1.cpu().numpy())
-    s2 = set(tensor2.cpu().numpy())
+    # s1 = set(tensor1.cpu().numpy())
+    # s2 = set(tensor2.cpu().numpy())
 
     intersect = len(s1.intersection(s2))
     union = (len(s1) + len(s2)) - intersect
