@@ -335,6 +335,8 @@ def jaccard_row(teacher_prototype, student_prototypes, max_union, device):
 
 def jaccard_similarity(tensor1, tensor2, max_union=100000.0):
 
+    print(tensor1.shape)
+
     s1 = set(tensor1[0].unique())
     s2 = set(tensor2[0].unique())
 
