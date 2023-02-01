@@ -25,12 +25,12 @@ def init_model(args_filename, device):
     args = Arguments(args_filename)
     model = PPNetWrapper(args, device)
     model.compute_indices_scores()
-    model.find_nearest_patches()
+    #model.find_nearest_patches()
     return model
 
 def run_experiment(experiment_name, teacher, baseline_student, kd_student):
     print(f'Running experiment: {experiment_name}')
-    for dist_threshold in [0.01, 0.1, 0.2, 0.45, 1.0, 3.0, 5.0, None]:
+    for dist_threshold in [0.1]:
         results = {
             'aap': {
                 'teacher': teacher.compute_aap(dist_threshold),
@@ -50,10 +50,10 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
         }
         dir = os.path.join('results', experiment_name, str(dist_threshold))
         makedir(dir)
-        pms, best_allocation = baseline_student.compute_pms(dist_threshold, teacher.indices_scores)
+        pms, best_allocation = baseline_student.compute_pms(teacher.indices_scores)
         results['pms']['baseline_student'] = pms
         np.save(os.path.join(dir, 'best_allocation_baseline.npy'), best_allocation)
-        pms, best_allocation = kd_student.compute_pms(dist_threshold, teacher.indices_scores)
+        pms, best_allocation = kd_student.compute_pms(teacher.indices_scores)
         results['pms']['kd_student'] = pms
         np.save(os.path.join(dir, 'best_allocation_kd.npy'), best_allocation)
         with open(os.path.join(dir, 'metrics.yaml'), 'w') as file:
