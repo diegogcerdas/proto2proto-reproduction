@@ -10,7 +10,7 @@ from tqdm import tqdm
 import torch.nn.functional as F
 from scipy.optimize import linear_sum_assignment
 from .dataloader import CUBDataLoader
-import ray
+from sklearn import preprocessing
 
 
 class PPNetWrapper:
@@ -110,7 +110,7 @@ class PPNetWrapper:
 
         return aap
 
-    def compute_pms(self, dist_th, teacher_indices_scores):
+    def compute_pms(self, teacher_indices_scores):
         assert (
             self.indices_scores is not None
         ), "Please run self.compute_indices_scores()"
@@ -121,35 +121,31 @@ class PPNetWrapper:
         num_test_images = len(self.dataloader.test_loader)
         num_prototypes = self.model.num_prototypes
 
-        teacher_prototypes = [[[], []] for _ in range(num_prototypes)]
-        student_prototypes = [[[], []] for _ in range(num_prototypes)]
+        teacher_prototypes = np.empty((num_prototypes, num_test_images))
+        student_prototypes = np.empty((num_prototypes, num_test_images))
 
         for ii in tqdm(range(num_test_images), desc="Computing PMS"):
 
-            if dist_th is None:
-                pruned_teacher_indices = teacher_indices_scores[ii][0]
-                pruned_student_indices = self.indices_scores[ii][0]
-            else:
-                pruned_teacher_indices = []
-                for jj, score in enumerate(teacher_indices_scores[ii][1]):
-                    if abs(-score) <= dist_th:
-                        pruned_teacher_indices.append(teacher_indices_scores[ii][0][jj])
-                pruned_student_indices = []
-                for jj, score in enumerate(self.indices_scores[ii][1]):
-                    if abs(-score) <= dist_th:
-                        pruned_student_indices.append(self.indices_scores[ii][0][jj])
+            teacher_indices = teacher_indices_scores[ii][0]
+            student_indices = self.indices_scores[ii][0]
 
             for jj in range(len(teacher_prototypes)):
-                if jj <= len(pruned_teacher_indices) - 1:
-                    name = "%04d" % ii + "%02d" % pruned_teacher_indices[jj]
-                    teacher_prototypes[jj][0].append(name)
-                    teacher_prototypes[jj][1].append(None)
+                name = "%04d" % ii + "_" + "%02d" % teacher_indices[jj]
+                teacher_prototypes[jj][ii] = name
 
             for jj in range(len(student_prototypes)):
-                if jj <= len(pruned_student_indices) - 1:
-                    name = "%04d" % ii + "%02d" % pruned_student_indices[jj]
-                    student_prototypes[jj][0].append(name)
-                    student_prototypes[jj][1].append(None)
+                name = "%04d" % ii + "_" + "%02d" % student_indices[jj]
+                student_prototypes[jj][ii] = name
+
+        le = preprocessing.LabelEncoder()
+        all_prototypes = np.concatenate([teacher_prototypes, student_prototypes], axis=0)
+        all_shape = all_prototypes.shape
+        teacher_size = teacher_prototypes.shape[0]
+        all_prototypes = np.reshape(all_prototypes, (-1))
+        encoded_names = le.fit_transform(all_prototypes)
+        encoded_names = torch.as_tensor(encoded_names).view(all_shape).to(self.device)
+        teacher_prototypes = encoded_names[:teacher_size]
+        student_prototypes = encoded_names[teacher_size:]
 
         max_union_list = [
             ii
@@ -157,9 +153,6 @@ class PPNetWrapper:
                 int(0.1 * num_test_images), num_test_images, int(0.1 * num_test_images)
             )
         ]
-
-        teacher_prototypes = torch.tensor(teacher_prototypes).to(self.device)
-        student_prototypes = torch.tensor(student_prototypes).to(self.device)
 
         lowest_cost = np.inf
         best_allocation = None
