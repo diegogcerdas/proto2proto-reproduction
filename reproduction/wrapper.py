@@ -143,12 +143,12 @@ class PPNetWrapper:
         teacher_size = teacher_prototypes.shape[0]
         all_prototypes = np.reshape(all_prototypes, (-1))
         encoded_names = le.fit_transform(all_prototypes)
-        encoded_names = torch.as_tensor(encoded_names).view(all_shape).cpu()
+        encoded_names = torch.as_tensor(encoded_names).view(all_shape).to(self.device)
         teacher_prototypes = encoded_names[:teacher_size]
         student_prototypes = encoded_names[teacher_size:]
 
-        teacher_prototypes = [set(p.unique().numpy()) for p in teacher_prototypes]
-        student_prototypes = [set(p.unique().numpy()) for p in student_prototypes]
+        teacher_prototypes = [set(p.unique().cpu().numpy()) for p in teacher_prototypes]
+        student_prototypes = [set(p.unique().cpu().numpy()) for p in student_prototypes]
 
         max_union_list = [
             ii
@@ -174,7 +174,6 @@ class PPNetWrapper:
                 lowest_cost = cost
                 best_allocation = (row_ind, col_ind)
             cost_list.append(cost)
-            print(cost)
 
         avg_cost = float(sum(cost_list) / len(cost_list))
         pms = 1.0 - avg_cost
