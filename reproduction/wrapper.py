@@ -147,6 +147,9 @@ class PPNetWrapper:
         teacher_prototypes = encoded_names[:teacher_size]
         student_prototypes = encoded_names[teacher_size:]
 
+        teacher_prototypes = [p.unique() for p in teacher_prototypes]
+        student_prototypes = [p.unique() for p in student_prototypes]
+
         max_union_list = [
             ii
             for ii in range(
@@ -336,8 +339,8 @@ def jaccard_row(teacher_prototype, student_prototypes, max_union, device):
 
 def jaccard_similarity(tensor1, tensor2, max_union=100000.0):
 
-    s1 = set(tensor1.unique().cpu().numpy())
-    s2 = set(tensor2.unique().cpu().numpy())
+    s1 = set(tensor1.cpu().numpy())
+    s2 = set(tensor2.cpu().numpy())
 
     intersect = len(s1.intersection(s2))
     union = (len(s1) + len(s2)) - intersect
