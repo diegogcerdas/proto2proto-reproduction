@@ -1,0 +1,17 @@
+dataLoader:
+  testDir: datasets/CUB_200_2011/test_crop/
+  projectDir: datasets/CUB_200_2011/train_crop/
+  numWorkers: 0
+settingsConfig:
+  imgSize: 224
+  numFeatures: 128
+  PrototypeActivationFunction: log
+  backbone:
+    name: vgg11
+    pretrained: false
+    loadPath: checkpoints/vgg11_baseline.pth
+  protoPNet:
+    numPrototypes: 2000
+    W1: 1
+    H1: 1
+saveImgDir: nearest/vgg11_baseline

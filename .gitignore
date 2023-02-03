@@ -1,9 +1,7 @@
-*/*/*/__pycache__/
-*/*/__pycache__/
-*/__pycache__/
 __pycache__/
-*.py[cod]
-*.cpython-36.pyc
-org/
-datasets
-*/*.pth
+checkpoints/
+datasets/
+lib/
+pretrained_models/
+nearest/
+results/
