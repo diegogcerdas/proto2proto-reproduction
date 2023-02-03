@@ -1,6 +1,6 @@
 # On the reproducibility of ”Proto2Proto: Can you recognize the car, the way I do?”
 
-This repository concerns a reproducibility study of the paper: [_Proto2Proto: Can You Recognize the Car, the Way I Do?_ ](https://openaccess.thecvf.com/content/CVPR2022/html/Keswani_Proto2Proto_Can_You_Recognize_the_Car_the_Way_I_Do_CVPR_2022_paper.html). It builds upon the authors' [original implementation](https://github.com/archmaester/proto2proto), and provides wrapping code to run evaluation in an easy and efficient manner.
+This repository concerns a reproducibility study of the paper: [_Proto2Proto: Can You Recognize the Car, the Way I Do?_ ](https://openaccess.thecvf.com/content/CVPR2022/html/Keswani_Proto2Proto_Can_You_Recognize_the_Car_the_Way_I_Do_CVPR_2022_paper.html) by Keswani et al. (2022). It builds upon the authors' [original implementation](https://github.com/archmaester/proto2proto), and provides wrapping code to run evaluation in an easy and efficient manner.
 
 ## Creating Conda Environment
     conda env create -f environment.yml python=3.6
