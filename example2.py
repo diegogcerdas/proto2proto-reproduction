@@ -11,14 +11,14 @@ def main():
 
     # VGG19 -> VGG 11
     teacher = init_model('arguments/vgg19_teacher.yaml', device)
-    baseline_student = init_model('arguments/vgg11_baseline.yaml', device)
-    kd_student = init_model('arguments/vgg11_kd.yaml', device)
-    run_experiment('vgg19_11', teacher, baseline_student, kd_student)
+    #baseline_student = init_model('arguments/vgg11_baseline.yaml', device)
+    #kd_student = init_model('arguments/vgg11_kd.yaml', device)
+    #run_experiment('vgg19_11', teacher, baseline_student, kd_student)
 
     # VGG19 -> VGG 16
-    #baseline_student = init_model('arguments/vgg16_baseline.yaml', device)
-    #kd_student = init_model('arguments/vgg16_kd.yaml', device)
-    #run_experiment('vgg19_16', teacher, baseline_student, kd_student)
+    baseline_student = init_model('arguments/vgg16_baseline.yaml', device)
+    kd_student = init_model('arguments/vgg16_kd.yaml', device)
+    run_experiment('vgg19_16', teacher, baseline_student, kd_student)
 
 def init_model(args_filename, device):
     print(f"Initializing from {args_filename}.")
