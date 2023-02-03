@@ -302,16 +302,19 @@ class PPNetWrapper:
         for _ in range(n_prototypes):
             heaps.append([])
 
+        # Loop through training images
         for (search_batch, search_y) in tqdm(
             self.dataloader.project_loader, desc="Finding patches"
         ):
 
+            # Compute distances to each prototype
             with torch.no_grad():
                 search_batch = search_batch.to(self.device)
                 _, proto_dist_torch = self.model.push_forward(search_batch)
 
             proto_dist_ = np.copy(proto_dist_torch.detach().cpu().numpy())
 
+            # Find closest patches for each prototype
             for img_idx, distance_map in enumerate(proto_dist_):
                 for j in range(n_prototypes):
                     closest_patch_distance_to_prototype_j = np.amin(distance_map[j])
@@ -371,6 +374,7 @@ class PPNetWrapper:
                     else:
                         heapq.heappushpop(heaps[j], closest_patch)
 
+        # Save the found patches displayed over original image
         for j in tqdm(range(n_prototypes), desc="Saving images"):
             heaps[j].sort()
             heaps[j] = heaps[j][::-1]
@@ -407,6 +411,7 @@ class PPNetWrapper:
             [[patch.label for patch in heaps[j]] for j in range(n_prototypes)]
         )
 
+        # Additionally, save the classes activated by each prototype
         np.save(
             os.path.join(self.save_img_dir, "class_ids.npy"),
             labels_all_prototype,
