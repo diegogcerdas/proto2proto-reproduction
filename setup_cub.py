@@ -7,6 +7,7 @@ from PIL import Image
 print("Setting up CUB...")
 
 # From ProtoTree/preprocess_data/download_birds.py
+# Downloads all data
 
 url = 'https://drive.google.com/uc?id=1hbzc_P1FuxMkcabkgn9ZKinBwW683j45' 
 target_path = './tmp_data/CUB_200_2011/CUB-200-2011.tgz'
@@ -18,6 +19,7 @@ tar.close()
 print("CUB downloaded")
 
 # From ProtoTree/preprocess_data/cub.py
+# Creates dataset by cropping images
 
 path = './tmp_data/CUB_200_2011/'
 

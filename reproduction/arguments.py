@@ -1,6 +1,9 @@
 import yaml
 
 class Arguments:
+    """
+    This class simply loads an arguments YAML file.
+    """
     
     class ProtoPNet:
 

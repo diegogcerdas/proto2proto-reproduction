@@ -9,19 +9,21 @@ def main():
     device = torch.device("cuda:0") if torch.cuda.is_available() else torch.device("cpu")
     print(f"Device: {device}")
 
-    # VGG19 -> VGG 11
+    # VGG19 -> VGG 11 experiment
     teacher = init_model('arguments/vgg19_teacher.yaml', device)
     baseline_student = init_model('arguments/vgg11_baseline.yaml', device)
     kd_student = init_model('arguments/vgg11_kd.yaml', device)
     run_experiment('vgg19_11', teacher, baseline_student, kd_student)
 
-    # VGG19 -> VGG 16
+    # VGG19 -> VGG 16 experiment
     teacher = init_model('arguments/vgg19_teacher.yaml', device)
     baseline_student = init_model('arguments/vgg16_baseline.yaml', device)
     kd_student = init_model('arguments/vgg16_kd.yaml', device)
     run_experiment('vgg19_16', teacher, baseline_student, kd_student)
 
 def init_model(args_filename, device):
+    """ Initializes a model from a given argument file
+    """
     print(f"Initializing from {args_filename}.")
     args = Arguments(args_filename)
     model = PPNetWrapper(args, device)
@@ -34,17 +36,21 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
     results_dir = os.path.join('results', experiment_name)
     makedir(results_dir)
 
+    # Save indices of test image patches and their similarity score with the corresponding prototype
     save_indices_scores(results_dir, teacher, baseline_student, kd_student)
     
+    # Compute accuracies
     teacher_accuracy = teacher.compute_accuracy()
     baseline_accuracy = baseline_student.compute_accuracy()
     kd_accuracy = kd_student.compute_accuracy()
     
+    # Compute PMS Scores and save student-teacher prototype matching indices
     baseline_pms, baseline_best_allocation = baseline_student.compute_pms(teacher.indices_scores)
     np.save(os.path.join(results_dir, 'baseline_best_allocation.npy'), baseline_best_allocation)
     kd_pms, kd_best_allocation = kd_student.compute_pms(teacher.indices_scores)
     np.save(os.path.join(results_dir, 'kd_best_allocation.npy'), kd_best_allocation)
 
+    # For each distance threshold (used to define an active patch), comput AAP and AJS
     for dist_threshold in [0.01, 0.1, 0.2, 0.45, 1.0, 3.0, 5.0, None]:
         results = {
             'aap': {
@@ -66,6 +72,8 @@ def run_experiment(experiment_name, teacher, baseline_student, kd_student):
                 'kd_student': kd_pms
             }
         }
+
+        # Save results
         results_dist_dir = os.path.join(results_dir, str(dist_threshold))
         makedir(results_dist_dir)
         with open(os.path.join(results_dist_dir, 'metrics.yaml'), 'w') as file:

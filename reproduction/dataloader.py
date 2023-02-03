@@ -5,6 +5,10 @@ from .arguments import Arguments
 
 
 class CUBDataLoader(object):
+    """Dataloader class for CUB_200_2011 dataset. 
+    Loads test and projection (training without augmentations) sets.
+    """
+
     def __init__(self, args: Arguments) -> None:
 
         self.test_dir = args.dataLoader.testDir
