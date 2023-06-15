@@ -1,6 +1,8 @@
 # On the reproducibility of ”Proto2Proto: Can you recognize the car, the way I do?”
 
-This repository concerns a reproducibility study of the paper: [_Proto2Proto: Can You Recognize the Car, the Way I Do?_ ](https://openaccess.thecvf.com/content/CVPR2022/html/Keswani_Proto2Proto_Can_You_Recognize_the_Car_the_Way_I_Do_CVPR_2022_paper.html) by Keswani et al. (2022). It builds upon the authors' [original implementation](https://github.com/archmaester/proto2proto), and provides wrapping code to run evaluation in an easy and efficient manner.
+This repository concerns a reproducibility study of the paper: [_Proto2Proto: Can You Recognize the Car, the Way I Do?_ ](https://openaccess.thecvf.com/content/CVPR2022/html/Keswani_Proto2Proto_Can_You_Recognize_the_Car_the_Way_I_Do_CVPR_2022_paper.html) by Keswani et al. (2022). It builds upon the authors' [original implementation](https://github.com/archmaester/proto2proto) and provides wrapping code to run evaluation in an easy and efficient manner.
+
+This project was developed by Diego Garcia Cerdas, Rens Kierkels, Thomas Jurriaans, and Sergei Agaronian as part of the FACT-AI course at the University of Amsterdam.
 
 ## Creating Conda Environment
     conda env create -f environment.yml python=3.6
@@ -15,7 +17,7 @@ Please make sure to run the above command before running other scripts or notebo
 
 ## Model Weights and Results from our Reproducibility Study
 
-We provide the model weights of the networks used in our study through [this anonymous storage](https://drive.google.com/drive/folders/1ZgEKQe9tX6loGBip4TQ1HIRK45SqWMBd?usp=sharing), in `checkpoints.zip`. You can also download `results.zip`, containing the metrics for our experiments and prototype matches between teacher and student, and `nearest.zip` containing the nearest training patches for each model's prototypes.
+We provide the model weights of the networks used in our study through [this storage](https://drive.google.com/drive/folders/1ZgEKQe9tX6loGBip4TQ1HIRK45SqWMBd?usp=sharing), in `checkpoints.zip`. You can also download `results.zip`, containing the metrics for our experiments and prototype matches between teacher and student, and `nearest.zip` containing the nearest training patches for each model's prototypes.
 
 - Please unzip these files into the current directory as `./checkpoints/`, `./results/`, and `./nearest/` respectively.
 
